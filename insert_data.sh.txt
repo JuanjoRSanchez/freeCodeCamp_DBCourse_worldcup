@@ -1,0 +1,67 @@
+#! /bin/bash
+
+if [[ $1 == "test" ]]
+then
+  PSQL="psql --username=postgres --dbname=worldcuptest -t --no-align -c"
+else
+  PSQL="psql --username=freecodecamp --dbname=worldcup -t --no-align -c"
+fi
+
+# Do not change code above this line. Use the PSQL variable above to query your database
+
+# PSQL="psql --username=freecodecamp --dbname=worldcup -t --no-align -c"
+echo $($PSQL "TRUNCATE games,teams")
+
+cat games.csv | while IFS=","  read -r YEAR ROUND WINNER OPPONENT WINNER_GOALS OPPONENT_GOALS
+
+
+do
+
+  if [[ $YEAR != "year" && $ROUND != "Round" && $WINNER != "Winner" && $OPPONENT != "Opponent" && $WINNER_GOALS != "winner_goals" && $OPPONENT_GOALS != "opponent_goals" ]]
+  # Insert teams
+  then 
+    WINNER_ID=$($PSQL "SELECT team_id FROM teams WHERE name='$WINNER'")
+    if [[ -z $WINNER_ID ]]
+      then 
+        echo "Name winner: $WINNER"
+        IN_WINNER=$($PSQL "INSERT INTO teams(name) VALUES('$WINNER')")
+        if [[ $IN_WINNER == "INSERT 0 1" ]]
+          then
+            echo $IN_WINNER
+
+            WINNER_ID=$($PSQL "SELECT team_id FROM teams WHERE name='$WINNER'") 
+            WINNER_NAME=$($PSQL "SELECT name FROM teams WHERE team_id='$WINNER_ID'")
+            echo "Insert result: $WINNER_NAME"
+        fi
+    fi
+    OPPONENT_ID=$($PSQL "SELECT team_id FROM teams WHERE name='$OPPONENT'")
+    if [[ -z $OPPONENT_ID ]]
+      then 
+        echo "Name winner: $OPPONENT"
+        IN_OPPONENT=$($PSQL "INSERT INTO teams(name) VALUES('$OPPONENT')")
+        if [[ $IN_OPPONENT == "INSERT 0 1" ]]
+          then
+            echo $IN_OPPONENT
+
+            OPPONENT_ID=$($PSQL "SELECT team_id FROM teams WHERE name='$OPPONENT'") 
+            OPPONENT_NAME=$($PSQL "SELECT name FROM teams WHERE team_id='$OPPONENT_ID'")
+            echo "Insert result: $OPPONENT_NAME"
+        fi
+    fi  
+    # Insert games
+    
+    if [[ -n $YEAR && -n $ROUND && -n $WINNER && -n $OPPONENT && -n $WINNER_GOALS && -n $OPPONENT_GOALS ]]
+      then
+
+        INSERT_GAME=$($PSQL "INSERT INTO games(year, round, winner_id, opponent_id, winner_goals, opponent_goals) VALUES($YEAR, '$ROUND', $WINNER_ID, $OPPONENT_ID, $WINNER_GOALS, $OPPONENT_GOALS)")
+
+        if [[ $INSERT_GAME == "INSERT 0 1" ]]
+          then 
+          echo "Insert data: $YEAR, $ROUND, $WINNER, $OPPONENT, $WINNER_GOALS, $OPPONENT_GOALS"
+
+        fi
+    fi
+  fi  
+
+done
+          
